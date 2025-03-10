@@ -34,7 +34,7 @@
             <div class="shadow-lg rounded-xl bg-white p-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">Lokasi</h2>
 
-                <form action="{{ route('attend.submitOut') }}" method="POST" enctype= multipart/form-data class="px-2">
+                <form action="{{ route('attend.submitOut') }}" method="POST" enctype=multipart/form-data class="px-2">
                     @csrf
                     <!-- Latitude Input (Read-Only) -->
                     <div class="py-2">
@@ -108,6 +108,11 @@
             const targetLng = 115.221045;
             const allowedRadius = 100; // in meters
 
+            // Target location for Visit & Site
+            const targetLat = 8.635829;
+            const targetLng = 115.221045;
+            const allowedRadius = 100; // in meters
+
             function calculateDistance(lat1, lon1, lat2, lon2) {
                 const R = 6371e3; // Earth’s radius in meters
                 const toRad = (value) => value * Math.PI / 180;
@@ -142,13 +147,13 @@
                 $select.trigger('change');
             }
 
-
             function handleError(error) {
                 let errorMessage = "Unknown error occurred while fetching location.";
 
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
                         errorMessage = "Location permission denied. Please enable it in your browser settings.";
+                        alert(errorMessage);
                         break;
                     case error.POSITION_UNAVAILABLE:
                         errorMessage = "GPS signal weak or unavailable. Try moving to an open area.";
@@ -165,21 +170,28 @@
                 $('#latitude').val(errorMessage);
                 $('#longitude').val(errorMessage);
 
-                // Retry fetching location if it's a temporary issue (POSITION_UNAVAILABLE or TIMEOUT)
+                // Retry fetching location if it's a temporary issue
                 if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
                     setTimeout(() => {
                         console.log("Retrying location request...");
                         navigator.geolocation.getCurrentPosition(updateLocation, handleError, {
                             enableHighAccuracy: true,
-                            timeout: 5000,
-                            maximumAge: 0
+                            timeout: 10000, // Increase timeout
+                            maximumAge: 0 // Ensure fresh location data
                         });
                     }, 5000); // Retry after 5 seconds
                 }
             }
 
-
             if ("geolocation" in navigator) {
+                // First-time fetch
+                navigator.geolocation.getCurrentPosition(updateLocation, handleError, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+
+                // Continuous tracking
                 navigator.geolocation.watchPosition(updateLocation, handleError, {
                     enableHighAccuracy: true,
                     maximumAge: 5000
@@ -188,6 +200,7 @@
                 $('#latitude').val("Geolocation not supported");
                 $('#longitude').val("Geolocation not supported");
             }
+
 
             // Image preview functionality
             $('#foto').on('change', function(event) {
